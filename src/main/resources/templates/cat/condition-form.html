@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Log a Condition</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1 th:text="${conditionId != null} ? 'Edit condition' : 'Log a condition'">Condition</h1>
+
+<form class="stacked" th:object="${conditionForm}"
+      th:action="${conditionId != null}
+          ? @{'/cats/' + ${catId} + '/conditions/' + ${conditionId} + '/edit'}
+          : @{'/cats/' + ${catId} + '/conditions'}"
+      method="post">
+    <label for="name">Condition</label>
+    <input type="text" id="name" th:field="*{name}" required autofocus/>
+    <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+
+    <label for="notes">Notes (optional)</label>
+    <textarea id="notes" th:field="*{notes}" rows="4"></textarea>
+    <span class="field-error" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></span>
+
+    <div class="actions">
+        <button type="submit" class="primary">Save condition</button>
+        <a class="button secondary" th:href="@{'/cats/' + ${catId}}">Cancel</a>
+    </div>
+</form>
+</body>
+</html>

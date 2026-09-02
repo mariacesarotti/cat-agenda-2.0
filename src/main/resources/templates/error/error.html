@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Something's Amiss</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>Something's amiss in the command center</h1>
+<p>The agenda hit a snag. Try again in a moment, or head back to the household.</p>
+<a class="button" th:href="@{/cats}">Back to the household</a>
+</body>
+</html>

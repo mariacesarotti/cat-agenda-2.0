@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav th:fragment="nav" class="nav">
+    <a class="brand" th:href="@{/cats}">CatAgenda</a>
+    <span class="tagline">The Agenda proceeds, one feeding at a time.</span>
+    <form sec:authorize="isAuthenticated()"
+          th:action="@{/logout}" method="post" class="logout-form">
+        <button type="submit" class="link-button">Log out</button>
+    </form>
+</nav>
+</body>
+</html>

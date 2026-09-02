@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — The Household</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>The Household</h1>
+
+<div class="actions">
+    <a class="button" th:href="@{/cats/new}">Recruit a new cat</a>
+</div>
+
+<div class="empty-state" th:if="${#lists.isEmpty(cats)}">
+    <p><strong>No operatives on file yet.</strong></p>
+    <p>The world domination plan is currently a committee of zero. Add your first cat to get the agenda moving.</p>
+</div>
+
+<div th:unless="${#lists.isEmpty(cats)}">
+    <a class="cat-card" th:each="cat : ${cats}" th:href="@{'/cats/' + ${cat.id}}">
+        <div class="cat-name" th:text="${cat.name}">Cat name</div>
+        <div class="cat-meta">
+            <span th:if="${cat.age != null}" th:text="${cat.age} + ' yrs old'">Age</span>
+            <span th:unless="${cat.age != null}">Age: not set yet</span>
+        </div>
+    </a>
+</div>
+</body>
+</html>

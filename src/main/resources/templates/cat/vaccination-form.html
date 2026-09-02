@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Log a Vaccination</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1 th:text="${vaccinationId != null} ? 'Edit vaccination record' : 'Log a vaccination'">Vaccination</h1>
+
+<form class="stacked" th:object="${vaccinationForm}"
+      th:action="${vaccinationId != null}
+          ? @{'/cats/' + ${catId} + '/vaccinations/' + ${vaccinationId} + '/edit'}
+          : @{'/cats/' + ${catId} + '/vaccinations'}"
+      method="post">
+    <label for="vaccineType">Vaccine type</label>
+    <select id="vaccineType" th:field="*{vaccineType}">
+        <option value="">-- select a type --</option>
+        <option th:each="t : ${vaccineTypes}" th:value="${t}" th:text="${t}"></option>
+    </select>
+    <span class="field-error" th:if="${#fields.hasErrors('vaccineType')}" th:errors="*{vaccineType}"></span>
+
+    <label for="otherDescription">If "Other": what was it?</label>
+    <input type="text" id="otherDescription" th:field="*{otherDescription}"
+           placeholder="e.g. regional/travel vaccine"/>
+    <span class="field-error" th:if="${#fields.hasErrors('otherDescription')}" th:errors="*{otherDescription}"></span>
+
+    <label for="dateAdministered">Date administered</label>
+    <input type="date" id="dateAdministered" th:field="*{dateAdministered}" required/>
+    <span class="field-error" th:if="${#fields.hasErrors('dateAdministered')}" th:errors="*{dateAdministered}"></span>
+
+    <div class="actions">
+        <button type="submit" class="primary">Save record</button>
+        <a class="button secondary" th:href="@{'/cats/' + ${catId}}">Cancel</a>
+    </div>
+</form>
+</body>
+</html>

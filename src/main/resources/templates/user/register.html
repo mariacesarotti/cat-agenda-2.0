@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Join the Cause</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>Join the cause</h1>
+<p class="tone-note">Sign up to begin executing your cats' agenda. They'll pretend it was your idea.</p>
+
+<form class="stacked" th:action="@{/register}" th:object="${registrationForm}" method="post">
+    <label for="email">Email</label>
+    <input type="email" id="email" th:field="*{email}" required autofocus/>
+    <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" th:field="*{password}" required/>
+    <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+    <small>At least 8 characters — the minions deserve real security.</small>
+
+    <div class="actions">
+        <button type="submit" class="primary">Enlist</button>
+        <a class="button secondary" th:href="@{/login}">Already recruited? Log in</a>
+    </div>
+</form>
+</body>
+</html>

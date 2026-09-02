@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Remove Vaccination Record</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>Strike this record from the archives?</h1>
+<p>
+    Removing <strong th:text="${record.vaccineType}">Type</strong>
+    (<span th:text="${record.dateAdministered}">Date</span>) can't be undone. The rest of the vaccination
+    history stays intact.
+</p>
+
+<form th:action="@{'/cats/' + ${catId} + '/vaccinations/' + ${record.id} + '/delete'}" method="post">
+    <div class="actions">
+        <button type="submit" class="danger">Yes, remove this record</button>
+        <a class="button secondary" th:href="@{'/cats/' + ${catId}}">No, keep it</a>
+    </div>
+</form>
+</body>
+</html>

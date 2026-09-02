@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Log a Checkup</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1 th:text="${checkupId != null} ? 'Edit checkup record' : 'Log a checkup'">Checkup</h1>
+
+<form class="stacked" th:object="${checkupForm}"
+      th:action="${checkupId != null}
+          ? @{'/cats/' + ${catId} + '/checkups/' + ${checkupId} + '/edit'}
+          : @{'/cats/' + ${catId} + '/checkups'}"
+      method="post">
+    <label for="visitDate">Visit date</label>
+    <input type="date" id="visitDate" th:field="*{visitDate}" required/>
+    <span class="field-error" th:if="${#fields.hasErrors('visitDate')}" th:errors="*{visitDate}"></span>
+
+    <div class="actions">
+        <button type="submit" class="primary">Save record</button>
+        <a class="button secondary" th:href="@{'/cats/' + ${catId}}">Cancel</a>
+    </div>
+</form>
+</body>
+</html>

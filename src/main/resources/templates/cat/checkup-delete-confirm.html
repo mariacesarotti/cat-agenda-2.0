@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Remove Checkup Record</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>Strike this checkup from the file?</h1>
+<p>
+    Removing the visit on <span th:text="${record.visitDate}">Date</span> can't be undone. This is just a data
+    correction — the rest of the checkup history stays intact.
+</p>
+
+<form th:action="@{'/cats/' + ${catId} + '/checkups/' + ${record.id} + '/delete'}" method="post">
+    <div class="actions">
+        <button type="submit" class="danger">Yes, remove this record</button>
+        <a class="button secondary" th:href="@{'/cats/' + ${catId}}">No, keep it</a>
+    </div>
+</form>
+</body>
+</html>

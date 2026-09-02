@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Gone Dark</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>This operative has gone dark</h1>
+<p>Whatever you were looking for isn't here — or it belongs to someone else's agenda, not yours.</p>
+<a class="button" th:href="@{/cats}">Back to the household</a>
+</body>
+</html>

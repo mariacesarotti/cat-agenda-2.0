@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Remove cat profile — CatAgenda</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<!--
+  Deliberate tone exception (P1-8): this confirmation stays warm and plain,
+  not witty — removing a cat's profile can mean the cat has passed away.
+-->
+<h1>Remove <span th:text="${cat.name}">this cat</span>'s profile?</h1>
+<p>
+    This will permanently remove <span th:text="${cat.name}">this cat</span>'s profile, including its known
+    conditions and vaccination history. This can't be undone.
+</p>
+<p>
+    Take a moment if you need it. When you're ready, you can confirm below.
+</p>
+
+<form th:action="@{'/cats/' + ${cat.id} + '/delete'}" method="post">
+    <div class="actions">
+        <button type="submit" class="danger">Yes, remove this profile</button>
+        <a class="button secondary" th:href="@{'/cats/' + ${cat.id}}">No, go back</a>
+    </div>
+</form>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Recruit a Cat</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>Recruit a new cat</h1>
+<p class="tone-note">Only a name is required. The rest of the dossier can be filled in later.</p>
+
+<form class="stacked" th:action="@{/cats}" th:object="${catForm}" method="post">
+    <label for="name">Name</label>
+    <input type="text" id="name" th:field="*{name}" required autofocus/>
+    <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+
+    <label for="age">Age (years)</label>
+    <input type="number" id="age" th:field="*{age}" min="0" max="40"/>
+    <span class="field-error" th:if="${#fields.hasErrors('age')}" th:errors="*{age}"></span>
+
+    <label for="sex">Sex</label>
+    <select id="sex" th:field="*{sex}">
+        <option value="">-- not set yet --</option>
+        <option th:each="s : ${sexes}" th:value="${s}" th:text="${s}"></option>
+    </select>
+
+    <label for="spayedNeutered">Spayed / neutered</label>
+    <select id="spayedNeutered" th:field="*{spayedNeutered}">
+        <option value="">-- not set yet --</option>
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+    </select>
+
+    <label for="outdoorAccess">Outdoor access</label>
+    <select id="outdoorAccess" th:field="*{outdoorAccess}">
+        <option value="">-- not set yet --</option>
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+    </select>
+
+    <div class="actions">
+        <button type="submit" class="primary">Add to the household</button>
+        <a class="button secondary" th:href="@{/cats}">Cancel</a>
+    </div>
+</form>
+</body>
+</html>

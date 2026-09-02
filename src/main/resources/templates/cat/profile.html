@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${cat.name} + ' — CatAgenda'">Cat profile</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="alert alert-info" th:if="${param.created}">
+    New operative onboarded. <span th:text="${cat.name}">Cat</span> is now on the agenda.
+</div>
+<div class="alert alert-info" th:if="${param.updated}">Dossier updated.</div>
+<div class="alert alert-info" th:if="${param.conditionAdded}">Condition logged for the record.</div>
+<div class="alert alert-info" th:if="${param.conditionUpdated}">Condition updated.</div>
+<div class="alert alert-info" th:if="${param.conditionRemoved}">Condition struck from the record.</div>
+<div class="alert alert-info" th:if="${param.vaccinationAdded}">Vaccination logged. Immunity: bolstered.</div>
+<div class="alert alert-info" th:if="${param.vaccinationUpdated}">Vaccination record corrected.</div>
+<div class="alert alert-info" th:if="${param.vaccinationRemoved}">Vaccination record removed.</div>
+<div class="alert alert-info" th:if="${param.checkupAdded}">Checkup logged. The human minion did something right.</div>
+<div class="alert alert-info" th:if="${param.checkupUpdated}">Checkup record corrected.</div>
+<div class="alert alert-info" th:if="${param.checkupRemoved}">Checkup record removed.</div>
+
+<h1 th:text="${cat.name}">Cat name</h1>
+
+<section class="profile-section">
+    <h2>Core dossier</h2>
+    <p>
+        <strong>Age:</strong>
+        <span th:if="${cat.age != null}" th:text="${cat.age} + ' years'">Age</span>
+        <span th:unless="${cat.age != null}">not set yet</span>
+    </p>
+    <p>
+        <strong>Sex:</strong>
+        <span th:if="${cat.sex != null}" th:text="${cat.sex}">Sex</span>
+        <span th:unless="${cat.sex != null}">not set yet</span>
+    </p>
+    <p>
+        <strong>Spayed / neutered:</strong>
+        <span th:if="${cat.spayedNeutered != null}" th:text="${cat.spayedNeutered} ? 'Yes' : 'No'">Status</span>
+        <span th:unless="${cat.spayedNeutered != null}">not set yet</span>
+    </p>
+    <p>
+        <strong>Outdoor access:</strong>
+        <span th:if="${cat.outdoorAccess != null}" th:text="${cat.outdoorAccess} ? 'Yes' : 'No'">Status</span>
+        <span th:unless="${cat.outdoorAccess != null}">not set yet</span>
+    </p>
+    <div class="actions">
+        <a class="button" th:href="@{'/cats/' + ${cat.id} + '/edit'}">Edit dossier</a>
+        <a class="button secondary" th:href="@{'/cats/' + ${cat.id} + '/delete'}">Remove this cat</a>
+    </div>
+</section>
+
+<section class="profile-section">
+    <h2>Known conditions</h2>
+    <div class="empty-state" th:if="${#lists.isEmpty(cat.conditions)}">
+        A clean bill of health... for now.
+    </div>
+    <table class="records" th:unless="${#lists.isEmpty(cat.conditions)}">
+        <thead>
+        <tr><th>Condition</th><th>Notes</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="condition : ${cat.conditions}">
+            <td th:text="${condition.name}">Name</td>
+            <td th:text="${condition.notes} ?: '—'">Notes</td>
+            <td>
+                <a th:href="@{'/cats/' + ${cat.id} + '/conditions/' + ${condition.id} + '/edit'}">Edit</a>
+                <form th:action="@{'/cats/' + ${cat.id} + '/conditions/' + ${condition.id} + '/delete'}"
+                      method="post" style="display:inline">
+                    <button type="submit" class="link-button">Remove</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="actions">
+        <a class="button" th:href="@{'/cats/' + ${cat.id} + '/conditions/new'}">Log a condition</a>
+    </div>
+</section>
+
+<section class="profile-section">
+    <h2>Vaccination history</h2>
+    <div class="empty-state" th:if="${#lists.isEmpty(cat.vaccinationRecords)}">
+        No shots on record yet. The immune system's agenda is wide open.
+    </div>
+    <table class="records" th:unless="${#lists.isEmpty(cat.vaccinationRecords)}">
+        <thead>
+        <tr><th>Type</th><th>Date administered</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="record : ${cat.vaccinationRecords}">
+            <td>
+                <span th:text="${record.vaccineType}">Type</span>
+                <span th:if="${record.vaccineType.name() == 'OTHER'}" th:text="'(' + ${record.otherDescription} + ')'"></span>
+            </td>
+            <td th:text="${record.dateAdministered}">Date</td>
+            <td>
+                <a th:href="@{'/cats/' + ${cat.id} + '/vaccinations/' + ${record.id} + '/edit'}">Edit</a>
+                <a th:href="@{'/cats/' + ${cat.id} + '/vaccinations/' + ${record.id} + '/delete'}">Remove</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="actions">
+        <a class="button" th:href="@{'/cats/' + ${cat.id} + '/vaccinations/new'}">Log a vaccination</a>
+    </div>
+</section>
+
+<section class="profile-section">
+    <h2>Checkup history</h2>
+    <div class="empty-state" th:if="${#lists.isEmpty(cat.checkupRecords)}">
+        No vet visits on file yet. The agenda insists this is fine.
+    </div>
+    <table class="records" th:unless="${#lists.isEmpty(cat.checkupRecords)}">
+        <thead>
+        <tr><th>Visit date</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="checkup : ${cat.checkupRecords}">
+            <td th:text="${checkup.visitDate}">Date</td>
+            <td>
+                <a th:href="@{'/cats/' + ${cat.id} + '/checkups/' + ${checkup.id} + '/edit'}">Edit</a>
+                <a th:href="@{'/cats/' + ${cat.id} + '/checkups/' + ${checkup.id} + '/delete'}">Remove</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="actions">
+        <a class="button" th:href="@{'/cats/' + ${cat.id} + '/checkups/new'}">Log a checkup</a>
+    </div>
+</section>
+</body>
+</html>

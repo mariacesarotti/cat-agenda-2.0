@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Report for Duty</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>Report for duty</h1>
+<p class="tone-note">Your cats have been expecting you.</p>
+
+<div class="alert alert-error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+<div class="alert alert-info" th:if="${infoMessage}" th:text="${infoMessage}"></div>
+
+<form class="stacked" th:action="@{/login}" method="post">
+    <label for="username">Email</label>
+    <input type="email" id="username" name="username" required autofocus/>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required/>
+
+    <div class="actions">
+        <button type="submit" class="primary">Log in</button>
+        <a class="button secondary" th:href="@{/register}">New here? Get recruited</a>
+    </div>
+</form>
+</body>
+</html>

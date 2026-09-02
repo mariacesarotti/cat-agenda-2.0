@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: cat-agenda
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/catagenda
+    username: catagenda
+    password: pick-a-password
+
+  jpa:
+    # Flyway owns the schema (see db/migration) — Hibernate must never
+    # auto-generate or alter tables, only map to what Flyway already created.
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8080
