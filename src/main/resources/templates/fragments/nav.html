@@ -3,6 +3,8 @@
 <body>
 <nav th:fragment="nav" class="nav">
     <a class="brand" th:href="@{/cats}">CatAgenda</a>
+    <a class="nav-link" th:href="@{/calendar}">Calendar</a>
+    <a class="nav-link" th:href="@{/cart}">Supply Chain</a>
     <span class="tagline">The Agenda proceeds, one feeding at a time.</span>
     <form sec:authorize="isAuthenticated()"
           th:action="@{/logout}" method="post" class="logout-form">

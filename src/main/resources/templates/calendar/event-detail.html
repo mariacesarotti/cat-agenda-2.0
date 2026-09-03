@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Agenda item — CatAgenda</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>Agenda item</h1>
+
+<span class="overdue-tag large" th:if="${event.overdue}">Overdue</span>
+
+<section class="profile-section">
+    <p>
+        <strong>Cat:</strong>
+        <span th:text="${event.cat.name}">Cat name</span>
+    </p>
+    <p>
+        <strong>Event type:</strong>
+        <span th:if="${event.eventType.name() == 'CHECKUP'}">Vet checkup</span>
+        <span th:if="${event.eventType.name() == 'VACCINE'}"
+              th:text="${#strings.capitalize(#strings.toLowerCase(event.vaccineType.toString()))} + ' vaccination'">Vaccination</span>
+    </p>
+    <p>
+        <strong>Due date:</strong>
+        <span th:text="${event.dueDate}">Date</span>
+    </p>
+    <p th:if="${event.overdue}">
+        This one's overdue — the human minion is falling behind schedule.
+    </p>
+    <p th:unless="${event.overdue}">
+        Still on track. The agenda approves.
+    </p>
+
+    <div class="actions">
+        <a class="button" th:href="@{'/cats/' + ${event.cat.id}}">Go to <span th:text="${event.cat.name}">cat</span>'s profile</a>
+        <a class="button secondary" th:href="@{/calendar}">Back to the calendar</a>
+    </div>
+</section>
+</body>
+</html>

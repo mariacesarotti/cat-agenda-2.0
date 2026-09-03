@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>The Agenda's Calendar — CatAgenda</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>The Agenda's Calendar</h1>
+
+<div class="calendar-toolbar">
+    <div class="calendar-nav">
+        <a class="button secondary"
+           th:href="@{/calendar(year=${previousMonth.year}, month=${previousMonth.monthValue}, catId=${selectedCatId})}">
+            &larr; Previous
+        </a>
+        <span class="calendar-month-label"
+              th:text="${#strings.capitalize(#strings.toLowerCase(currentMonth.month.toString()))} + ' ' + ${currentMonth.year}">
+            Month Year
+        </span>
+        <a class="button secondary"
+           th:href="@{/calendar(year=${nextMonth.year}, month=${nextMonth.monthValue}, catId=${selectedCatId})}">
+            Next &rarr;
+        </a>
+    </div>
+
+    <form method="get" th:action="@{/calendar}" class="filter-form">
+        <input type="hidden" name="year" th:value="${currentMonth.year}"/>
+        <input type="hidden" name="month" th:value="${currentMonth.monthValue}"/>
+        <label for="catId">Watching:</label>
+        <select id="catId" name="catId" onchange="this.form.submit()">
+            <option value="" th:selected="${selectedCatId == null}">All operatives</option>
+            <option th:each="cat : ${cats}" th:value="${cat.id}" th:text="${cat.name}"
+                    th:selected="${selectedCatId != null and selectedCatId == cat.id}">Cat name</option>
+        </select>
+        <noscript><button type="submit" class="button secondary">Filter</button></noscript>
+        <a th:if="${selectedCatId != null}"
+           th:href="@{/calendar(year=${currentMonth.year}, month=${currentMonth.monthValue})}"
+           class="reset-filter">Back to all cats</a>
+    </form>
+</div>
+
+<div class="empty-state" th:if="${#lists.isEmpty(events)}">
+    <p><strong>All clear on the agenda.</strong></p>
+    <p>Nothing due, nothing to plot — the world domination timetable is suspiciously right on schedule this month.</p>
+</div>
+
+<div class="calendar-grid" th:with="leadingBlanks=${currentMonth.atDay(1).dayOfWeek.value % 7}">
+    <div class="calendar-weekday">Sun</div>
+    <div class="calendar-weekday">Mon</div>
+    <div class="calendar-weekday">Tue</div>
+    <div class="calendar-weekday">Wed</div>
+    <div class="calendar-weekday">Thu</div>
+    <div class="calendar-weekday">Fri</div>
+    <div class="calendar-weekday">Sat</div>
+
+    <th:block th:if="${leadingBlanks > 0}">
+        <div class="calendar-day empty" th:each="blank : ${#numbers.sequence(1, leadingBlanks)}"></div>
+    </th:block>
+
+    <div class="calendar-day" th:each="day : ${#numbers.sequence(1, currentMonth.lengthOfMonth())}"
+         th:with="cellDate=${currentMonth.atDay(day)}, dayEvents=${events.?[dueDate.isEqual(#vars.cellDate)]}">
+        <div class="calendar-day-number" th:text="${day}">1</div>
+        <a class="calendar-event" th:classappend="${event.overdue} ? ' overdue' : ''"
+           th:each="event : ${dayEvents}"
+           th:href="${event.eventType.name() == 'VACCINE'}
+                     ? @{'/calendar/events/vaccine/' + ${event.cat.id} + '/' + ${event.vaccineType}}
+                     : @{'/calendar/events/checkup/' + ${event.cat.id}}">
+            <span th:text="${event.cat.name}">Cat</span> &mdash;
+            <span th:if="${event.eventType.name() == 'CHECKUP'}">Checkup</span>
+            <span th:if="${event.eventType.name() == 'VACCINE'}"
+                  th:text="${#strings.capitalize(#strings.toLowerCase(event.vaccineType.toString()))}">Vaccine</span>
+            <span class="overdue-tag" th:if="${event.overdue}">Overdue</span>
+        </a>
+    </div>
+</div>
+</body>
+</html>
