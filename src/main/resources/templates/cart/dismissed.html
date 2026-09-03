@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Dismissed — The Supply Chain — CatAgenda</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>The Cooling-Off Pile</h1>
+<p class="tone-note">
+    Items stood down from active duty. Nothing here counts as restocked — the agenda just isn't worried about it
+    right now. Change your mind? Reinstate it.
+</p>
+
+<div class="alert alert-info" th:if="${cartMessage}" th:text="${cartMessage}">Message</div>
+
+<div class="actions">
+    <a class="button secondary" th:href="@{/cart}">Back to the Supply Chain</a>
+</div>
+
+<div class="empty-state" th:if="${#lists.isEmpty(items)}">
+    <p><strong>Nothing benched right now.</strong></p>
+    <p>Every order stands. Dismiss something from the cart and it'll show up here.</p>
+</div>
+
+<div th:unless="${#lists.isEmpty(items)}">
+    <div class="cart-item" th:each="item : ${items}"
+         th:with="kindPath=${item.kind.name().toLowerCase()},
+                   ref=${item.kind.name() == 'SYSTEM' ? item.itemType : item.cartItemId}">
+        <div class="cart-item-header">
+            <span class="cart-item-name" th:text="${item.displayName}">Item</span>
+            <span class="cart-item-badge"
+                  th:text="${item.kind.name() == 'SYSTEM'} ? 'Standing order' : 'Special requisition'">Kind</span>
+        </div>
+
+        <div class="actions cart-item-actions">
+            <form method="post" th:action="@{'/cart/' + ${kindPath} + '/' + ${ref} + '/restore'}" class="inline-form">
+                <button type="submit" class="button">Reinstate</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

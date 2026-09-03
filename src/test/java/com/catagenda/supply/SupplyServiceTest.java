@@ -8,7 +8,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +24,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SupplyServiceTest {
 
+    private static final LocalDateTime NOW = LocalDateTime.of(2026, 3, 1, 9, 0);
+    private static final Clock CLOCK = Clock.fixed(NOW.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+
     @Mock
     private SupplyTrackerRepository supplyTrackerRepository;
 
@@ -31,7 +37,7 @@ class SupplyServiceTest {
 
     @BeforeEach
     void setUp() {
-        supplyService = new SupplyService(supplyTrackerRepository);
+        supplyService = new SupplyService(supplyTrackerRepository, CLOCK);
         owner = new User("owner@example.com", "hash");
         otherOwner = new User("other@example.com", "hash");
     }
@@ -72,6 +78,73 @@ class SupplyServiceTest {
     }
 
     @Test
+    void markRestockedClearsAnyExistingDismissal() {
+        SupplyTracker existing = new SupplyTracker(owner, SupplyItemType.FOOD);
+        existing.setDismissedAt(LocalDateTime.of(2026, 1, 15, 10, 0));
+        when(supplyTrackerRepository.findByOwnerAndItemType(owner, SupplyItemType.FOOD))
+                .thenReturn(Optional.of(existing));
+        when(supplyTrackerRepository.save(any(SupplyTracker.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        SupplyTracker updated = supplyService.markRestocked(owner, SupplyItemType.FOOD, LocalDate.of(2026, 3, 1));
+
+        assertThat(updated.getDismissedAt()).isNull();
+        assertThat(updated.getLastRestockedAt()).isEqualTo(LocalDate.of(2026, 3, 1));
+    }
+
+    @Test
+    void dismissSetsDismissedAtWithoutTouchingLastRestockedAt() {
+        SupplyTracker existing = new SupplyTracker(owner, SupplyItemType.LITTER);
+        existing.setLastRestockedAt(LocalDate.of(2026, 1, 1));
+        when(supplyTrackerRepository.findByOwnerAndItemType(owner, SupplyItemType.LITTER))
+                .thenReturn(Optional.of(existing));
+        when(supplyTrackerRepository.save(any(SupplyTracker.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        SupplyTracker dismissed = supplyService.dismiss(owner, SupplyItemType.LITTER);
+
+        assertThat(dismissed.getDismissedAt()).isEqualTo(NOW);
+        assertThat(dismissed.getLastRestockedAt()).isEqualTo(LocalDate.of(2026, 1, 1));
+    }
+
+    @Test
+    void dismissCreatesATrackerRowIfNoneExistsYet() {
+        when(supplyTrackerRepository.findByOwnerAndItemType(owner, SupplyItemType.MEDICATION))
+                .thenReturn(Optional.empty());
+        when(supplyTrackerRepository.save(any(SupplyTracker.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        SupplyTracker dismissed = supplyService.dismiss(owner, SupplyItemType.MEDICATION);
+
+        assertThat(dismissed.getOwner()).isEqualTo(owner);
+        assertThat(dismissed.getItemType()).isEqualTo(SupplyItemType.MEDICATION);
+        assertThat(dismissed.getDismissedAt()).isEqualTo(NOW);
+        assertThat(dismissed.getLastRestockedAt()).isNull();
+    }
+
+    @Test
+    void restoreClearsDismissedAtOnAnExistingRow() {
+        SupplyTracker existing = new SupplyTracker(owner, SupplyItemType.LITTER);
+        existing.setDismissedAt(LocalDateTime.of(2026, 1, 15, 10, 0));
+        when(supplyTrackerRepository.findByOwnerAndItemType(owner, SupplyItemType.LITTER))
+                .thenReturn(Optional.of(existing));
+
+        supplyService.restore(owner, SupplyItemType.LITTER);
+
+        assertThat(existing.getDismissedAt()).isNull();
+    }
+
+    @Test
+    void restoreIsANoOpWhenNoTrackerRowExistsYet() {
+        when(supplyTrackerRepository.findByOwnerAndItemType(owner, SupplyItemType.LITTER))
+                .thenReturn(Optional.empty());
+
+        supplyService.restore(owner, SupplyItemType.LITTER);
+
+        verify(supplyTrackerRepository, times(0)).save(any());
+    }
+
+    @Test
     void getForOwnerDelegatesToRepositoryScopedByOwner() {
         SupplyTracker tracker = new SupplyTracker(owner, SupplyItemType.FOOD);
         when(supplyTrackerRepository.findByOwner(owner)).thenReturn(List.of(tracker));
@@ -94,6 +167,20 @@ class SupplyServiceTest {
         supplyService.markRestocked(otherOwner, SupplyItemType.FOOD, LocalDate.now());
 
         verify(supplyTrackerRepository).findByOwnerAndItemType(otherOwner, SupplyItemType.FOOD);
+        verify(supplyTrackerRepository, times(0)).findByOwnerAndItemType(owner, SupplyItemType.FOOD);
+    }
+
+    @Test
+    void dismissAndRestoreLookUpOnlyTheRequestingOwnersRow() {
+        when(supplyTrackerRepository.findByOwnerAndItemType(otherOwner, SupplyItemType.FOOD))
+                .thenReturn(Optional.empty());
+        when(supplyTrackerRepository.save(any(SupplyTracker.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        supplyService.dismiss(otherOwner, SupplyItemType.FOOD);
+        supplyService.restore(otherOwner, SupplyItemType.FOOD);
+
+        verify(supplyTrackerRepository, times(2)).findByOwnerAndItemType(otherOwner, SupplyItemType.FOOD);
         verify(supplyTrackerRepository, times(0)).findByOwnerAndItemType(owner, SupplyItemType.FOOD);
     }
 }

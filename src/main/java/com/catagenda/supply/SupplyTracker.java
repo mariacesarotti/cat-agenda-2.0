@@ -46,6 +46,14 @@ public class SupplyTracker {
     @Column(name = "last_restocked_at")
     private LocalDate lastRestockedAt;
 
+    // Nullable: absent means "not currently dismissed" (ADR 0007, Decision
+    // 2 / T1.1). Deliberately a second, independent field alongside
+    // lastRestockedAt, not a reuse of it — SupplyReasoningService never
+    // reads this column at all (Phase 4 tech-task doc, Section 0); only
+    // CartService filters on it, one layer up.
+    @Column(name = "dismissed_at")
+    private LocalDateTime dismissedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -75,6 +83,14 @@ public class SupplyTracker {
 
     public void setLastRestockedAt(LocalDate lastRestockedAt) {
         this.lastRestockedAt = lastRestockedAt;
+    }
+
+    public LocalDateTime getDismissedAt() {
+        return dismissedAt;
+    }
+
+    public void setDismissedAt(LocalDateTime dismissedAt) {
+        this.dismissedAt = dismissedAt;
     }
 
     public LocalDateTime getCreatedAt() {

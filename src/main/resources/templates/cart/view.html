@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>The Supply Chain — CatAgenda</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>The Supply Chain</h1>
+<p class="tone-note">Everything the operation needs to stay provisioned — restock it, dismiss it, or go find it.</p>
+
+<div class="alert alert-info" th:if="${cartMessage}" th:text="${cartMessage}">Message</div>
+<div class="alert alert-error" th:if="${cartError}" th:text="${cartError}">Error</div>
+<div class="alert alert-info" th:if="${param.itemAdded}">Requisition filed. It's on the list now.</div>
+
+<div class="actions">
+    <a class="button secondary" th:href="@{/cart/dismissed}">View dismissed items</a>
+</div>
+
+<div class="empty-state" th:if="${#lists.isEmpty(items)}">
+    <p><strong>Supply lines fully secured.</strong></p>
+    <p>Every operative is provisioned and the cause wants for nothing. Suspiciously well-stocked, actually — enjoy it while it lasts.</p>
+</div>
+
+<div th:unless="${#lists.isEmpty(items)}">
+    <div class="cart-item" th:each="item : ${items}"
+         th:with="kindPath=${item.kind.name().toLowerCase()},
+                   ref=${item.kind.name() == 'SYSTEM' ? item.itemType : item.cartItemId}">
+        <div class="cart-item-header">
+            <span class="cart-item-name" th:text="${item.displayName}">Item</span>
+            <span class="cart-item-badge"
+                  th:text="${item.kind.name() == 'SYSTEM'} ? 'Standing order' : 'Special requisition'">Kind</span>
+            <span class="overdue-tag" th:if="${item.overdue}">Overdue</span>
+        </div>
+
+        <div class="cart-item-meta" th:if="${item.kind.name() == 'SYSTEM'}">
+            <span th:if="${item.dueDate != null}">Due <span th:text="${item.dueDate}">date</span></span>
+            <span th:if="${!#lists.isEmpty(item.relevantCats)}">
+                for
+                <span th:each="cat, iter : ${item.relevantCats}">
+                    <span th:text="${cat.name}">Cat</span><span th:if="${!iter.last}">, </span>
+                </span>
+            </span>
+        </div>
+        <div class="cart-item-meta" th:if="${item.kind.name() == 'MANUAL'}">
+            <span>Added by you — off the beaten catalog.</span>
+        </div>
+
+        <div class="actions cart-item-actions">
+            <form method="post" th:action="@{'/cart/' + ${kindPath} + '/' + ${ref} + '/restock'}" class="inline-form">
+                <input type="date" name="restockedOn" th:value="${today}" th:max="${today}"
+                       th:aria-label="'Restocked on, for ' + ${item.displayName}"/>
+                <button type="submit" class="button">Mark restocked</button>
+            </form>
+            <form method="post" th:action="@{'/cart/' + ${kindPath} + '/' + ${ref} + '/dismiss'}" class="inline-form">
+                <button type="submit" class="button secondary">Dismiss</button>
+            </form>
+            <a class="button secondary"
+               th:href="${T(com.catagenda.cart.SearchLinkBuilder).buildSearchUrl(item.displayName)}"
+               target="_blank" rel="noopener">Scout the market</a>
+        </div>
+    </div>
+</div>
+
+<section class="profile-section">
+    <h2>Requisition something new</h2>
+    <p class="tone-note">
+        Didn't see what you need on the list? Log it yourself — every good agenda leaves room for improvisation.
+    </p>
+    <form class="stacked" th:object="${cartItemForm}" th:action="@{/cart/items}" method="post">
+        <label for="name">Item name</label>
+        <input type="text" id="name" th:field="*{name}" required autofocus/>
+        <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+
+        <div class="actions">
+            <button type="submit" class="primary">Add to the cart</button>
+        </div>
+    </form>
+</section>
+</body>
+</html>
