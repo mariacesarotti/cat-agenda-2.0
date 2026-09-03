@@ -21,5 +21,54 @@ spring:
   thymeleaf:
     cache: false
 
+  # Phase 5 (T2.1, T7.2): the "google-calendar" registration id is
+  # deliberately not "google" -- Spring Boot reserves that id for a
+  # convenience shorthand, and "google-calendar" reads more clearly as
+  # narrowly-scoped API access rather than a login provider. `provider:
+  # google` still inherits Google's real authorization/token/jwk endpoints
+  # from Spring's built-in CommonOAuth2Provider.GOOGLE defaults.
+  #
+  # client-id/client-secret are read from environment variables and are
+  # never committed with real values; the placeholder fallback lets the app
+  # boot cleanly in dev/CI with no Google credentials configured at all --
+  # Spring Boot's OAuth2 client autoconfiguration fails startup on a *blank*
+  # client-id, not on an invalid-but-present one, so a real connect attempt
+  # would simply fail at Google's end (never a CatAgenda startup failure).
+  #
+  # access_type=offline + prompt=consent (T2.1's flagged gotcha): Google
+  # only issues a refresh token on a user's *first* consent by default: a
+  # reconnect after disconnect (P5-4) would silently come back with only an
+  # access token and no way to refresh it later without these two extra
+  # authorization request parameters, applied via the custom
+  # OAuth2AuthorizationRequestResolver in GoogleSyncConfig.
+  security:
+    oauth2:
+      client:
+        registration:
+          google-calendar:
+            provider: google
+            client-id: ${GOOGLE_CLIENT_ID:catagenda-dev-placeholder-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:catagenda-dev-placeholder-client-secret}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            # Narrowest scope that does the job (Section 0's least-privilege
+            # note): event-level access only, not full calendar management.
+            scope: https://www.googleapis.com/auth/calendar.events
+
+# Phase 5 (T1.7): symmetric key for encrypting the access/refresh token
+# columns at rest (EncryptedStringConverter), Base64-encoded, sourced from
+# an environment variable and never committed. Left unset here on purpose --
+# EncryptedStringConverter falls back to a random in-process key when this
+# is absent, which is fine for local dev/tests (nothing needs to survive a
+# restart) but must be set for any real deployment.
+catagenda:
+  google-sync:
+    # OI-2 (open item for PO/ops): hourly is a reasonable placeholder to
+    # build against -- trades off staleness (how long a due-date change can
+    # sit unpushed before the scheduled backstop catches it) against Google
+    # Calendar API quota usage across all connected owners. One-line change
+    # later, not an architectural commitment (ADR 0008's Consequences).
+    scheduled-sync-fixed-delay-ms: 3600000
+
 server:
   port: 8080

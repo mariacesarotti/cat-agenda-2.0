@@ -345,3 +345,34 @@ table.records th, table.records td {
     border-radius: 4px;
     font-size: 0.9rem;
 }
+
+/* Phase 5 — The Uplink (P5-1 through P5-5) */
+
+.sync-badge {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #4c5a8c;
+    margin-top: 0.1rem;
+}
+
+.sync-badge.sync-failed,
+.sync-failed {
+    color: #a4373a;
+    font-weight: 700;
+}
+
+.sync-status-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+}
+
+.sync-status-table th,
+.sync-status-table td {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.9rem;
+}

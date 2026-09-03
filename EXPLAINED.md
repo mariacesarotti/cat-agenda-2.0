@@ -15,3 +15,9 @@ same thing. Phase 1 predates this file; entries below start from Phase 2.
 - Enum constants with per-constant fields/constructors — 2026-09-02
 - `RedirectAttributes`/flash attributes (Post/Redirect/Get) — 2026-09-02
 - SpringEL `T()` operator for static method calls in Thymeleaf — 2026-09-02
+- JPA `AttributeConverter` for transparent column-level encryption — 2026-09-03
+- Spring Security OAuth2 Client (authorization) vs. OAuth2 Login (authentication), and OAuth2 "scope" — 2026-09-03
+- Custom `OAuth2AuthorizedClientService` as Spring Security's token-persistence extension point — 2026-09-03
+- Service-oriented vs. request-scoped `OAuth2AuthorizedClientManager` (authorizing outside an HTTP request) — 2026-09-03
+- `@Scheduled`/`@EnableScheduling` for in-process periodic jobs — 2026-09-03
+- `ObjectProvider<T>` for optional/lazily-resolved bean dependencies — 2026-09-03

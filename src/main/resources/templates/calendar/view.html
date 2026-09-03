@@ -65,6 +65,7 @@
         <div class="calendar-day-number" th:text="${day}">1</div>
         <a class="calendar-event" th:classappend="${event.overdue} ? ' overdue' : ''"
            th:each="event : ${dayEvents}"
+           th:with="syncedEvent=${syncStatusByKey.get(T(com.catagenda.googlesync.SyncedEventKey).of(event))}"
            th:href="${event.eventType.name() == 'VACCINE'}
                      ? @{'/calendar/events/vaccine/' + ${event.cat.id} + '/' + ${event.vaccineType}}
                      : @{'/calendar/events/checkup/' + ${event.cat.id}}">
@@ -73,6 +74,15 @@
             <span th:if="${event.eventType.name() == 'VACCINE'}"
                   th:text="${#strings.capitalize(#strings.toLowerCase(event.vaccineType.toString()))}">Vaccine</span>
             <span class="overdue-tag" th:if="${event.overdue}">Overdue</span>
+            <!-- T6.3: sync status conveyed by text/label, not color alone
+                 (same accessibility pattern P3-4's overdue styling already
+                 established). syncedEvent is null when no SyncedEvent row
+                 exists yet for this natural key -- "not yet synced," not an
+                 error. -->
+            <span class="sync-badge"
+                  th:classappend="${syncedEvent != null and syncedEvent.syncStatus.name() == 'FAILED'} ? ' sync-failed' : ''"
+                  th:text="${syncedEvent == null} ? 'Not yet synced'
+                            : (${syncedEvent.syncStatus.name() == 'OK'} ? 'Synced to Google' : 'Sync failed')">Sync status</span>
         </a>
     </div>
 </div>

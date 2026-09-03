@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>The Uplink — CatAgenda</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>The Uplink</h1>
+<p class="tone-note">
+    A direct line from the agenda to the humans' own Google Calendar — so the schedule is inescapable
+    on every device they own, not just this one.
+</p>
+
+<div class="alert alert-info" th:if="${connectionMessage}" th:text="${connectionMessage}">Message</div>
+<div class="alert alert-info" th:if="${syncMessage}" th:text="${syncMessage}">Message</div>
+
+<section class="profile-section">
+    <div th:if="${connection == null}">
+        <p><strong>Not connected.</strong> The agenda is currently operating without eyes on the humans'
+            personal calendar — a temporary and unfortunate gap in coverage.</p>
+        <div class="actions">
+            <a class="button primary" th:href="@{/oauth2/authorization/google-calendar}">Connect Google Calendar</a>
+        </div>
+        <p class="tone-note">
+            This only requests access to manage individual calendar events — not the humans' entire
+            calendar. Least privilege, maximum plausible deniability.
+        </p>
+    </div>
+
+    <div th:if="${connection != null and connection.disconnectedAt == null}">
+        <p><strong>Connected.</strong> Linked since <span th:text="${connection.connectedAt}">date</span>.
+            Every due date the agenda computes is being filed straight onto the humans' own calendar.</p>
+        <div class="actions">
+            <form method="post" th:action="@{/settings/google/sync}" class="inline-form">
+                <button type="submit" class="button">Sync now</button>
+            </form>
+            <form method="post" th:action="@{/settings/google/disconnect}" class="inline-form">
+                <button type="submit" class="button secondary">Disconnect</button>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${connection != null and connection.disconnectedAt != null}">
+        <p><strong>Disconnected.</strong> Was linked since <span th:text="${connection.connectedAt}">date</span>,
+            severed on <span th:text="${connection.disconnectedAt}">date</span>. Anything already on the
+            humans' calendar is untouched and stays exactly where it is — only new changes have stopped
+            syncing.</p>
+        <div class="actions">
+            <a class="button primary" th:href="@{/oauth2/authorization/google-calendar}">Reconnect Google Calendar</a>
+        </div>
+    </div>
+</section>
+
+<section class="profile-section">
+    <h2>Sync health</h2>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(syncedEvents)}">
+        <p><strong>Nothing synced yet.</strong></p>
+        <p>Connect the humans' calendar and run a sync to see the agenda's uplink status here.</p>
+    </div>
+
+    <table th:unless="${#lists.isEmpty(syncedEvents)}" class="sync-status-table">
+        <thead>
+        <tr>
+            <th>Cat</th>
+            <th>Event</th>
+            <th>Status</th>
+            <th>Last synced</th>
+            <th>Last error</th>
+            <th>Active</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="synced : ${syncedEvents}">
+            <td th:text="${synced.cat.name}">Cat</td>
+            <td>
+                <span th:if="${synced.eventType.name() == 'CHECKUP'}">Checkup</span>
+                <span th:if="${synced.eventType.name() == 'VACCINE'}"
+                      th:text="${#strings.capitalize(#strings.toLowerCase(synced.vaccineType.toString()))} + ' vaccine'">Vaccine</span>
+            </td>
+            <td>
+                <span th:if="${synced.syncStatus.name() == 'OK'}">Synced</span>
+                <span th:if="${synced.syncStatus.name() == 'FAILED'}" class="sync-failed">Sync failed</span>
+            </td>
+            <td th:text="${synced.lastSyncedAt}">timestamp</td>
+            <td th:text="${synced.lastError} ?: '—'">error</td>
+            <td th:text="${synced.deactivatedAt == null} ? 'Yes' : 'No (disconnected)'">Yes</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

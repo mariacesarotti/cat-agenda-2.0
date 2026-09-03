@@ -35,6 +35,18 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
+            <!-- Phase 5 (ADR 0008, Decision 2): Spring Security's OAuth2
+                 Client support, used purely for authorization (API access
+                 to a user's own Google Calendar), not as a second login
+                 mechanism; CatAgenda's own session-based login (ADR 0002)
+                 is untouched. Deliberately not Google's own
+                 google-api-client/google-oauth-client libraries (ADR 0008's
+                 Option C, rejected): that would introduce a second, parallel
+                 OAuth idiom alongside this one for no offsetting benefit. -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
