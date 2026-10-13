@@ -8,3 +8,6 @@ target/
 .DS_Store
 
 *.log
+.clj-kondo/
+.lsp/
+.claude/settings.local.json
