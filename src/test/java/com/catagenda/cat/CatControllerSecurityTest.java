@@ -1,5 +1,6 @@
 package com.catagenda.cat;
 
+import com.catagenda.spayneuter.SpayNeuterService;
 import com.catagenda.user.CurrentUserProvider;
 import com.catagenda.user.SecurityConfig;
 import com.catagenda.user.User;
@@ -38,6 +39,9 @@ class CatControllerSecurityTest {
 
     @MockBean
     private CurrentUserProvider currentUserProvider;
+
+    @MockBean
+    private SpayNeuterService spayNeuterService;
 
     @Test
     void unauthenticatedRequestToCatsRedirectsToLogin() throws Exception {

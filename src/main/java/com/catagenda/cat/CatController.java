@@ -1,5 +1,6 @@
 package com.catagenda.cat;
 
+import com.catagenda.spayneuter.SpayNeuterService;
 import com.catagenda.user.CurrentUserProvider;
 import com.catagenda.user.User;
 import jakarta.validation.Valid;
@@ -19,10 +20,13 @@ public class CatController {
 
     private final CatService catService;
     private final CurrentUserProvider currentUserProvider;
+    private final SpayNeuterService spayNeuterService;
 
-    public CatController(CatService catService, CurrentUserProvider currentUserProvider) {
+    public CatController(CatService catService, CurrentUserProvider currentUserProvider,
+                          SpayNeuterService spayNeuterService) {
         this.catService = catService;
         this.currentUserProvider = currentUserProvider;
+        this.spayNeuterService = spayNeuterService;
     }
 
     @GetMapping
@@ -58,7 +62,14 @@ public class CatController {
     @GetMapping("/{id}")
     public String profile(@PathVariable Long id, Authentication authentication, Model model) {
         User owner = currentUserProvider.get(authentication);
-        model.addAttribute("cat", catService.getOwnedWithDetailsOrThrow(id, owner));
+        Cat cat = catService.getOwnedWithDetailsOrThrow(id, owner);
+        model.addAttribute("cat", cat);
+        // Phase 6 (ADR 0009): the merge happens here, at the controller
+        // layer, the same "CatService/Cat stay unaware" boundary
+        // CalendarController already established for Google sync-status
+        // decoration — spayNeuterPlan is null when no plan row exists
+        // (never flagged, or already completed).
+        model.addAttribute("spayNeuterPlan", spayNeuterService.getPlanForCat(cat).orElse(null));
         return "cat/profile";
     }
 

@@ -38,9 +38,16 @@ final class EventPayloadBuilder {
 
     static String buildTitle(CalendarEvent event) {
         String catName = event.cat().getName();
+        // SPAY_NEUTER_PENDING is filtered out before this is ever reached
+        // in production (GoogleSyncService's exclusion, ADR 0009, Decision
+        // 3) -- but the switch has no default branch, so the compiler
+        // still requires both new cases handled here, catching a missing
+        // case at build time instead of leaving a runtime gap.
         return switch (event.eventType()) {
             case CHECKUP -> catName + " — Checkup due (keeping the human minion operational)";
             case VACCINE -> catName + " — " + capitalize(event.vaccineType().name()) + " vaccine due";
+            case SPAY_NEUTER_PENDING -> catName + " — Reproduction subroutine still active (schedule the decommissioning)";
+            case SPAY_NEUTER_SCHEDULED -> catName + " — Spay/neuter appointment (reproduction subroutine going offline)";
         };
     }
 

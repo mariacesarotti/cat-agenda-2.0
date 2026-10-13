@@ -68,11 +68,15 @@
            th:with="syncedEvent=${syncStatusByKey.get(T(com.catagenda.googlesync.SyncedEventKey).of(event))}"
            th:href="${event.eventType.name() == 'VACCINE'}
                      ? @{'/calendar/events/vaccine/' + ${event.cat.id} + '/' + ${event.vaccineType}}
-                     : @{'/calendar/events/checkup/' + ${event.cat.id}}">
+                     : (${event.eventType.name() == 'CHECKUP'}
+                         ? @{'/calendar/events/checkup/' + ${event.cat.id}}
+                         : @{'/calendar/events/spay-neuter/' + ${event.cat.id}})">
             <span th:text="${event.cat.name}">Cat</span> &mdash;
             <span th:if="${event.eventType.name() == 'CHECKUP'}">Checkup</span>
             <span th:if="${event.eventType.name() == 'VACCINE'}"
                   th:text="${#strings.capitalize(#strings.toLowerCase(event.vaccineType.toString()))}">Vaccine</span>
+            <span th:if="${event.eventType.name() == 'SPAY_NEUTER_PENDING'}">Spay/neuter: not yet scheduled</span>
+            <span th:if="${event.eventType.name() == 'SPAY_NEUTER_SCHEDULED'}">Spay/neuter appointment</span>
             <span class="overdue-tag" th:if="${event.overdue}">Overdue</span>
             <!-- T6.3: sync status conveyed by text/label, not color alone
                  (same accessibility pattern P3-4's overdue styling already

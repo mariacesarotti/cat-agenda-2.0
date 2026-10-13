@@ -6,6 +6,7 @@ import com.catagenda.cat.VaccineType;
 import com.catagenda.common.NotFoundException;
 import com.catagenda.reasoning.DueCheckup;
 import com.catagenda.reasoning.DueSoonSummary;
+import com.catagenda.reasoning.DueSpayNeuter;
 import com.catagenda.reasoning.DueSupplyItem;
 import com.catagenda.reasoning.DueVaccine;
 import com.catagenda.reasoning.ReasoningService;
@@ -67,7 +68,7 @@ class CalendarServiceTest {
         DueCheckup checkup = new DueCheckup(mochi, LocalDate.of(2026, 3, 1), false);
         DueVaccine vaccine = new DueVaccine(pepper, VaccineType.RABIES, LocalDate.of(2026, 4, 1), true);
         DueSupplyItem supplyItem = new DueSupplyItem(SupplyItemType.LITTER, LocalDate.of(2026, 1, 1), true, List.of(mochi));
-        DueSoonSummary summary = new DueSoonSummary(List.of(checkup), List.of(vaccine), List.of(supplyItem));
+        DueSoonSummary summary = new DueSoonSummary(List.of(checkup), List.of(vaccine), List.of(supplyItem), List.of());
 
         List<CalendarEvent> events = calendarService.toEvents(summary);
 
@@ -80,12 +81,27 @@ class CalendarServiceTest {
     }
 
     @Test
+    void toEventsMapsUnscheduledSpayNeuterToPendingAndScheduledToScheduled() {
+        DueSpayNeuter pending = new DueSpayNeuter(mochi, LocalDate.of(2026, 6, 1), false, true);
+        DueSpayNeuter scheduled = new DueSpayNeuter(pepper, LocalDate.of(2026, 7, 1), true, false);
+        DueSoonSummary summary = new DueSoonSummary(List.of(), List.of(), List.of(), List.of(pending, scheduled));
+
+        List<CalendarEvent> events = calendarService.toEvents(summary);
+
+        assertThat(events).hasSize(2);
+        assertThat(events).filteredOn(event -> event.cat().equals(mochi))
+                .extracting(CalendarEvent::eventType).containsExactly(CalendarEventType.SPAY_NEUTER_PENDING);
+        assertThat(events).filteredOn(event -> event.cat().equals(pepper))
+                .extracting(CalendarEvent::eventType).containsExactly(CalendarEventType.SPAY_NEUTER_SCHEDULED);
+    }
+
+    @Test
     void getEventsForOwnerSortsByDueDateThenByCatNameOnTies() {
         DueCheckup checkupMochi = new DueCheckup(mochi, LocalDate.of(2026, 5, 1), false);
         DueCheckup checkupPepper = new DueCheckup(pepper, LocalDate.of(2026, 5, 1), false);
         DueVaccine earlyVaccine = new DueVaccine(pepper, VaccineType.RABIES, LocalDate.of(2026, 1, 1), true);
         when(reasoningService.getDueSoon(owner)).thenReturn(
-                new DueSoonSummary(List.of(checkupMochi, checkupPepper), List.of(earlyVaccine), List.of()));
+                new DueSoonSummary(List.of(checkupMochi, checkupPepper), List.of(earlyVaccine), List.of(), List.of()));
 
         List<CalendarEvent> events = calendarService.getEventsForOwner(owner);
 
@@ -131,7 +147,7 @@ class CalendarServiceTest {
         DueCheckup junePepper = new DueCheckup(pepper, LocalDate.of(2026, 6, 1), false);
         DueCheckup mayPepper = new DueCheckup(pepper, LocalDate.of(2026, 5, 20), false);
         when(reasoningService.getDueSoon(owner)).thenReturn(
-                new DueSoonSummary(List.of(mayMochi, junePepper, mayPepper), List.of(), List.of()));
+                new DueSoonSummary(List.of(mayMochi, junePepper, mayPepper), List.of(), List.of(), List.of()));
 
         List<CalendarEvent> result = calendarService.getCalendarView(owner, YearMonth.of(2026, 5), pepper.getId());
 
@@ -142,7 +158,7 @@ class CalendarServiceTest {
 
     @Test
     void zeroCatsOrZeroDueItemsYieldsAnEmptyList() {
-        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(), List.of()));
+        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(), List.of(), List.of()));
 
         List<CalendarEvent> events = calendarService.getEventsForOwner(owner);
 
@@ -153,7 +169,7 @@ class CalendarServiceTest {
     void getEventDetailReturnsTheMatchingCheckupEvent() {
         when(catService.getOwnedOrThrow(mochi.getId(), owner)).thenReturn(mochi);
         DueCheckup checkup = new DueCheckup(mochi, LocalDate.of(2026, 5, 1), false);
-        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(checkup), List.of(), List.of()));
+        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(checkup), List.of(), List.of(), List.of()));
 
         Optional<CalendarEvent> result = calendarService.getEventDetail(owner, mochi.getId(), CalendarEventType.CHECKUP, null);
 
@@ -166,7 +182,7 @@ class CalendarServiceTest {
         when(catService.getOwnedOrThrow(mochi.getId(), owner)).thenReturn(mochi);
         DueVaccine rabies = new DueVaccine(mochi, VaccineType.RABIES, LocalDate.of(2026, 5, 1), false);
         DueVaccine fvrcp = new DueVaccine(mochi, VaccineType.FVRCP, LocalDate.of(2026, 6, 1), false);
-        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(rabies, fvrcp), List.of()));
+        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(rabies, fvrcp), List.of(), List.of()));
 
         Optional<CalendarEvent> result =
                 calendarService.getEventDetail(owner, mochi.getId(), CalendarEventType.VACCINE, VaccineType.FVRCP);
@@ -180,7 +196,7 @@ class CalendarServiceTest {
     void getEventDetailReturnsEmptyForAVaccineTypeNotCurrentlyDue() {
         when(catService.getOwnedOrThrow(mochi.getId(), owner)).thenReturn(mochi);
         DueVaccine rabies = new DueVaccine(mochi, VaccineType.RABIES, LocalDate.of(2026, 5, 1), false);
-        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(rabies), List.of()));
+        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(rabies), List.of(), List.of()));
 
         Optional<CalendarEvent> result =
                 calendarService.getEventDetail(owner, mochi.getId(), CalendarEventType.VACCINE, VaccineType.FVRCP);
@@ -196,6 +212,50 @@ class CalendarServiceTest {
                 .isInstanceOf(NotFoundException.class);
         // Ownership is enforced before any event lookup happens (T2.5) —
         // reasoning is never even consulted for a cat the user doesn't own.
+        verifyNoInteractions(reasoningService);
+    }
+
+    @Test
+    void getSpayNeuterEventDetailResolvesThePendingStateWithNoTypeSegmentNeeded() {
+        when(catService.getOwnedOrThrow(mochi.getId(), owner)).thenReturn(mochi);
+        DueSpayNeuter pending = new DueSpayNeuter(mochi, LocalDate.of(2026, 5, 1), false, true);
+        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(), List.of(), List.of(pending)));
+
+        Optional<CalendarEvent> result = calendarService.getSpayNeuterEventDetail(owner, mochi.getId());
+
+        assertThat(result).isPresent();
+        assertThat(result.get().eventType()).isEqualTo(CalendarEventType.SPAY_NEUTER_PENDING);
+    }
+
+    @Test
+    void getSpayNeuterEventDetailResolvesTheScheduledState() {
+        when(catService.getOwnedOrThrow(mochi.getId(), owner)).thenReturn(mochi);
+        DueSpayNeuter scheduled = new DueSpayNeuter(mochi, LocalDate.of(2026, 6, 1), true, false);
+        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(), List.of(), List.of(scheduled)));
+
+        Optional<CalendarEvent> result = calendarService.getSpayNeuterEventDetail(owner, mochi.getId());
+
+        assertThat(result).isPresent();
+        assertThat(result.get().eventType()).isEqualTo(CalendarEventType.SPAY_NEUTER_SCHEDULED);
+        assertThat(result.get().dueDate()).isEqualTo(LocalDate.of(2026, 6, 1));
+    }
+
+    @Test
+    void getSpayNeuterEventDetailReturnsEmptyWhenNoPlanExists() {
+        when(catService.getOwnedOrThrow(mochi.getId(), owner)).thenReturn(mochi);
+        when(reasoningService.getDueSoon(owner)).thenReturn(new DueSoonSummary(List.of(), List.of(), List.of(), List.of()));
+
+        Optional<CalendarEvent> result = calendarService.getSpayNeuterEventDetail(owner, mochi.getId());
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getSpayNeuterEventDetailThrowsForACatTheRequestingUserDoesNotOwn() {
+        when(catService.getOwnedOrThrow(99L, owner)).thenThrow(new NotFoundException("No cat with id 99 for this user."));
+
+        assertThatThrownBy(() -> calendarService.getSpayNeuterEventDetail(owner, 99L))
+                .isInstanceOf(NotFoundException.class);
         verifyNoInteractions(reasoningService);
     }
 }

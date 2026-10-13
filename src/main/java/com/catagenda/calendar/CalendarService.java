@@ -5,6 +5,7 @@ import com.catagenda.cat.CatService;
 import com.catagenda.cat.VaccineType;
 import com.catagenda.reasoning.DueCheckup;
 import com.catagenda.reasoning.DueSoonSummary;
+import com.catagenda.reasoning.DueSpayNeuter;
 import com.catagenda.reasoning.DueVaccine;
 import com.catagenda.reasoning.ReasoningService;
 import com.catagenda.user.User;
@@ -49,6 +50,14 @@ public class CalendarService {
      * {@code vaccineType}). Deliberately does not touch
      * {@code summary.dueSupplyItems()} — supply items are Phase 4's "Supply
      * Chain" cart, out of scope for the calendar per P3-1's AC.
+     * <p>
+     * Phase 6 (ADR 0009, Decision 2) additionally maps each
+     * {@code DueSpayNeuter} to {@code SPAY_NEUTER_PENDING} (not yet
+     * scheduled) or {@code SPAY_NEUTER_SCHEDULED} (a real appointment date),
+     * based on {@code DueSpayNeuter#scheduled}. Nothing else here changes —
+     * both new event types are additive mapping branches, per ADR 0006's
+     * consequence that this method is exactly where new event types get
+     * added.
      */
     List<CalendarEvent> toEvents(DueSoonSummary summary) {
         List<CalendarEvent> events = new ArrayList<>();
@@ -59,6 +68,13 @@ public class CalendarService {
         for (DueVaccine vaccine : summary.dueVaccines()) {
             events.add(new CalendarEvent(vaccine.cat(), CalendarEventType.VACCINE, vaccine.vaccineType(),
                     vaccine.dueDate(), vaccine.overdue()));
+        }
+        for (DueSpayNeuter spayNeuter : summary.dueSpayNeuters()) {
+            CalendarEventType eventType = spayNeuter.scheduled()
+                    ? CalendarEventType.SPAY_NEUTER_SCHEDULED
+                    : CalendarEventType.SPAY_NEUTER_PENDING;
+            events.add(new CalendarEvent(spayNeuter.cat(), eventType, null,
+                    spayNeuter.dueDate(), spayNeuter.overdue()));
         }
         return events;
     }
@@ -124,6 +140,25 @@ public class CalendarService {
                 .filter(event -> Objects.equals(event.cat().getId(), cat.getId()))
                 .filter(event -> event.eventType() == type)
                 .filter(event -> type != CalendarEventType.VACCINE || event.vaccineType() == vaccineTypeOrNull)
+                .findFirst();
+    }
+
+    /**
+     * P6-4's event-detail route (ADR 0009's Consequences): unlike
+     * {@link #getEventDetail}, this needs no type-disambiguating path
+     * segment the way {@code VACCINE}'s route needs {@code vaccineType} —
+     * a cat can be in the {@code SPAY_NEUTER_PENDING}/
+     * {@code SPAY_NEUTER_SCHEDULED} state at most once (one
+     * {@code SpayNeuterPlan} row per cat, ADR 0009's Decision 1), so
+     * {@code catId} alone is unambiguous. Same ownership-gate-before-lookup
+     * discipline as {@link #getEventDetail}.
+     */
+    public Optional<CalendarEvent> getSpayNeuterEventDetail(User owner, Long catId) {
+        Cat cat = catService.getOwnedOrThrow(catId, owner);
+        return getEventsForOwner(owner).stream()
+                .filter(event -> Objects.equals(event.cat().getId(), cat.getId()))
+                .filter(event -> event.eventType() == CalendarEventType.SPAY_NEUTER_PENDING
+                        || event.eventType() == CalendarEventType.SPAY_NEUTER_SCHEDULED)
                 .findFirst();
     }
 }

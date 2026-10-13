@@ -21,6 +21,9 @@
 <div class="alert alert-info" th:if="${param.checkupAdded}">Checkup logged. The human minion did something right.</div>
 <div class="alert alert-info" th:if="${param.checkupUpdated}">Checkup record corrected.</div>
 <div class="alert alert-info" th:if="${param.checkupRemoved}">Checkup record removed.</div>
+<div class="alert alert-info" th:if="${param.spayNeuterAppointmentScheduled}">Appointment booked. Filed under "world domination, on hold briefly."</div>
+<div class="alert alert-info" th:if="${catMessage}" th:text="${catMessage}">Message</div>
+<div class="alert alert-error" th:if="${catError}" th:text="${catError}">Error</div>
 
 <h1 th:text="${cat.name}">Cat name</h1>
 
@@ -49,6 +52,57 @@
     <div class="actions">
         <a class="button" th:href="@{'/cats/' + ${cat.id} + '/edit'}">Edit dossier</a>
         <a class="button secondary" th:href="@{'/cats/' + ${cat.id} + '/delete'}">Remove this cat</a>
+    </div>
+</section>
+
+<section class="profile-section">
+    <h2>Spay/neuter mission</h2>
+
+    <div th:if="${cat.spayedNeutered == true}">
+        <p><strong>Status:</strong> Mission accomplished. The reproduction subroutine is offline for good.</p>
+    </div>
+
+    <div th:if="${cat.spayedNeutered != true and spayNeuterPlan == null}">
+        <p>No plan filed yet. The agenda hasn't committed to this mission.</p>
+        <form th:action="@{'/cats/' + ${cat.id} + '/spay-neuter/flag-intent'}" method="post">
+            <div class="actions">
+                <button type="submit" class="primary">Flag intent to spay/neuter</button>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${spayNeuterPlan != null and spayNeuterPlan.appointmentDate == null}">
+        <p>
+            <strong>Status:</strong> Intent flagged, no appointment on the books yet. The agenda is watching.
+        </p>
+        <div class="actions">
+            <a class="button" th:href="@{'/cats/' + ${cat.id} + '/spay-neuter/appointment'}">Schedule appointment</a>
+            <form th:action="@{'/cats/' + ${cat.id} + '/spay-neuter/complete'}" method="post" style="display:inline">
+                <button type="submit" class="button">Mark completed</button>
+            </form>
+            <form th:action="@{'/cats/' + ${cat.id} + '/spay-neuter/unset-intent'}" method="post" style="display:inline">
+                <button type="submit" class="button secondary">Unset intent</button>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${spayNeuterPlan != null and spayNeuterPlan.appointmentDate != null}">
+        <p>
+            <strong>Appointment:</strong> <span th:text="${spayNeuterPlan.appointmentDate}">Date</span>
+            — the reproduction subroutine's days are numbered.
+        </p>
+        <div class="actions">
+            <a class="button" th:href="@{'/cats/' + ${cat.id} + '/spay-neuter/appointment'}">Edit appointment</a>
+            <form th:action="@{'/cats/' + ${cat.id} + '/spay-neuter/appointment/remove'}" method="post" style="display:inline">
+                <button type="submit" class="button secondary">Remove appointment</button>
+            </form>
+            <form th:action="@{'/cats/' + ${cat.id} + '/spay-neuter/complete'}" method="post" style="display:inline">
+                <button type="submit" class="button">Mark completed</button>
+            </form>
+            <form th:action="@{'/cats/' + ${cat.id} + '/spay-neuter/unset-intent'}" method="post" style="display:inline">
+                <button type="submit" class="button secondary">Unset intent</button>
+            </form>
+        </div>
     </div>
 </section>
 

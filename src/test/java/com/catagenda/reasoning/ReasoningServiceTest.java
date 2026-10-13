@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -33,14 +34,17 @@ class ReasoningServiceTest {
     @Mock
     private SupplyReasoningService supplyReasoningService;
 
+    @Mock
+    private SpayNeuterReasoningService spayNeuterReasoningService;
+
     private ReasoningService reasoningService;
 
     private User owner;
 
     @BeforeEach
     void setUp() {
-        reasoningService = new ReasoningService(
-                catService, checkupReasoningService, vaccinationReasoningService, supplyReasoningService);
+        reasoningService = new ReasoningService(catService, checkupReasoningService, vaccinationReasoningService,
+                supplyReasoningService, spayNeuterReasoningService);
         owner = new User("owner@example.com", "hash");
     }
 
@@ -54,7 +58,8 @@ class ReasoningServiceTest {
         assertThat(summary.dueCheckups()).isEmpty();
         assertThat(summary.dueVaccines()).isEmpty();
         assertThat(summary.dueSupplyItems()).isEmpty();
-        verifyNoInteractions(checkupReasoningService, vaccinationReasoningService);
+        assertThat(summary.dueSpayNeuters()).isEmpty();
+        verifyNoInteractions(checkupReasoningService, vaccinationReasoningService, spayNeuterReasoningService);
     }
 
     @Test
@@ -76,10 +81,18 @@ class ReasoningServiceTest {
         DueSupplyItem food = new DueSupplyItem(SupplyItemType.FOOD, LocalDate.of(2025, 5, 1), false, List.of(catA, catB));
         when(supplyReasoningService.computeHouseholdNeeds(owner)).thenReturn(List.of(food));
 
+        DueSpayNeuter pendingA = new DueSpayNeuter(catA, LocalDate.of(2025, 1, 1), false, true);
+        when(spayNeuterReasoningService.computeNextSpayNeuter(catA)).thenReturn(Optional.of(pendingA));
+        when(spayNeuterReasoningService.computeNextSpayNeuter(catB)).thenReturn(Optional.empty());
+
         DueSoonSummary summary = reasoningService.getDueSoon(owner);
 
         assertThat(summary.dueCheckups()).containsExactly(checkupA, checkupB);
         assertThat(summary.dueVaccines()).containsExactly(rabiesA, fvrcpB);
         assertThat(summary.dueSupplyItems()).containsExactly(food);
+        // catB has no DueSpayNeuter (empty Optional -- no plan flagged),
+        // so it's simply absent from the list, not an error or a
+        // placeholder entry (P6-4's opt-in tracking).
+        assertThat(summary.dueSpayNeuters()).containsExactly(pendingA);
     }
 }

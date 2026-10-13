@@ -1,6 +1,7 @@
 package com.catagenda.googlesync;
 
 import com.catagenda.calendar.CalendarEvent;
+import com.catagenda.calendar.CalendarEventType;
 import com.catagenda.calendar.CalendarService;
 import com.catagenda.user.User;
 import org.slf4j.Logger;
@@ -79,7 +80,17 @@ public class GoogleSyncService {
             return SyncResult.ownerSkipped();
         }
 
-        List<CalendarEvent> currentEvents = calendarService.getEventsForOwner(owner);
+        // ADR 0009, Decision 3: SPAY_NEUTER_PENDING carries a sentinel
+        // dueDate recomputed fresh on every read (never a real date -- see
+        // SpayNeuterReasoningService). Left in the syncable set, every run
+        // would see a "changed" dueDate versus the last sync and push a
+        // spurious edit to the user's real Google Calendar, indefinitely.
+        // Filtered out here, at the sync boundary, before any diffing --
+        // CalendarService/CalendarEvent stay unaware sync exists at all,
+        // the same boundary discipline ADR 0006/0008 already established.
+        List<CalendarEvent> currentEvents = calendarService.getEventsForOwner(owner).stream()
+                .filter(event -> event.eventType() != CalendarEventType.SPAY_NEUTER_PENDING)
+                .toList();
         List<SyncedEvent> storedRows = syncedEventRepository.findByOwnerAndDeactivatedAtIsNull(owner);
 
         Map<SyncedEventKey, SyncedEvent> storedByKey = storedRows.stream()

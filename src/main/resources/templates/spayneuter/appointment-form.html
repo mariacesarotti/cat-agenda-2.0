@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>CatAgenda — Schedule Spay/Neuter Appointment</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<h1>Schedule the decommissioning</h1>
+<p class="tone-note">Pick a date — the reproduction subroutine won't shut itself down.</p>
+
+<div class="alert alert-error" th:if="${spayNeuterError}" th:text="${spayNeuterError}">Error</div>
+
+<form class="stacked" th:object="${spayNeuterAppointmentForm}"
+      th:action="@{'/cats/' + ${catId} + '/spay-neuter/appointment'}" method="post">
+    <label for="appointmentDate">Appointment date</label>
+    <input type="date" id="appointmentDate" th:field="*{appointmentDate}" required/>
+    <span class="field-error" th:if="${#fields.hasErrors('appointmentDate')}" th:errors="*{appointmentDate}"></span>
+
+    <div class="actions">
+        <button type="submit" class="primary">Save appointment</button>
+        <a class="button secondary" th:href="@{'/cats/' + ${catId}}">Cancel</a>
+    </div>
+</form>
+</body>
+</html>

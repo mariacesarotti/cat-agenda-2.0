@@ -22,15 +22,20 @@
         <span th:if="${event.eventType.name() == 'CHECKUP'}">Vet checkup</span>
         <span th:if="${event.eventType.name() == 'VACCINE'}"
               th:text="${#strings.capitalize(#strings.toLowerCase(event.vaccineType.toString()))} + ' vaccination'">Vaccination</span>
+        <span th:if="${event.eventType.name() == 'SPAY_NEUTER_PENDING'}">Spay/neuter — not yet scheduled</span>
+        <span th:if="${event.eventType.name() == 'SPAY_NEUTER_SCHEDULED'}">Spay/neuter appointment</span>
     </p>
-    <p>
+    <p th:unless="${event.eventType.name() == 'SPAY_NEUTER_PENDING'}">
         <strong>Due date:</strong>
         <span th:text="${event.dueDate}">Date</span>
     </p>
-    <p th:if="${event.overdue}">
+    <p th:if="${event.eventType.name() == 'SPAY_NEUTER_PENDING'}">
+        No appointment on the books yet — the reproduction subroutine remains active until one is scheduled.
+    </p>
+    <p th:if="${event.overdue and event.eventType.name() != 'SPAY_NEUTER_PENDING'}">
         This one's overdue — the human minion is falling behind schedule.
     </p>
-    <p th:unless="${event.overdue}">
+    <p th:if="${!event.overdue and event.eventType.name() != 'SPAY_NEUTER_PENDING'}">
         Still on track. The agenda approves.
     </p>
 

@@ -145,6 +145,42 @@ class GoogleSyncServiceTest {
     }
 
     @Test
+    void aSpayNeuterPendingEventIsExcludedFromSyncEntirely() {
+        // ADR 0009, Decision 3: SPAY_NEUTER_PENDING's dueDate is a sentinel
+        // recomputed fresh every read -- never pushed to Google at all, so
+        // it never gets a SyncedEvent row and never causes a spurious
+        // "changed" diff on a later run.
+        givenActiveConnection();
+        CalendarEvent pending = new CalendarEvent(mochi, CalendarEventType.SPAY_NEUTER_PENDING, null,
+                LocalDate.of(2026, 4, 1), true);
+        when(calendarService.getEventsForOwner(owner)).thenReturn(List.of(pending));
+        when(syncedEventRepository.findByOwnerAndDeactivatedAtIsNull(owner)).thenReturn(List.of());
+
+        SyncResult result = googleSyncService.syncForOwner(owner);
+
+        assertThat(result.created()).isZero();
+        assertThat(result.updated()).isZero();
+        assertThat(result.removed()).isZero();
+        verifyNoInteractions(googleCalendarClient);
+        verify(syncedEventRepository, never()).save(any());
+    }
+
+    @Test
+    void aSpayNeuterScheduledEventSyncsLikeAnyOtherCareEvent() {
+        givenActiveConnection();
+        CalendarEvent scheduled = new CalendarEvent(mochi, CalendarEventType.SPAY_NEUTER_SCHEDULED, null,
+                LocalDate.of(2026, 4, 1), false);
+        when(calendarService.getEventsForOwner(owner)).thenReturn(List.of(scheduled));
+        when(syncedEventRepository.findByOwnerAndDeactivatedAtIsNull(owner)).thenReturn(List.of());
+        when(googleCalendarClient.createEvent(owner, scheduled)).thenReturn("google-event-1");
+
+        SyncResult result = googleSyncService.syncForOwner(owner);
+
+        assertThat(result.created()).isEqualTo(1);
+        verify(syncedEventRepository).save(any(SyncedEvent.class));
+    }
+
+    @Test
     void aStoredRowWhoseKeyIsNoLongerInTheCurrentEventsIsDeletedOnGoogleAndHardDeletedLocally() {
         givenActiveConnection();
         SyncedEvent stored = new SyncedEvent(owner, mochi, CalendarEventType.VACCINE, VaccineType.RABIES);

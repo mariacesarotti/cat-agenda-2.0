@@ -93,6 +93,22 @@ public class CalendarController {
         return renderDetail(catId, CalendarEventType.VACCINE, vaccineType, authentication, model);
     }
 
+    /**
+     * P6-4 — GET /calendar/events/spay-neuter/{catId}. No type/vaccineType
+     * path segment: only one of PENDING/SCHEDULED can exist per cat at a
+     * time (ADR 0009's Consequences), so {@link CalendarService#getSpayNeuterEventDetail}
+     * resolves whichever one currently applies.
+     */
+    @GetMapping("/events/spay-neuter/{catId}")
+    public String spayNeuterDetail(@PathVariable Long catId, Authentication authentication, Model model) {
+        User owner = currentUserProvider.get(authentication);
+        CalendarEvent event = calendarService.getSpayNeuterEventDetail(owner, catId)
+                .orElseThrow(() -> new NotFoundException(
+                        "No spay/neuter reminder for cat " + catId + " right now."));
+        model.addAttribute("event", event);
+        return "calendar/event-detail";
+    }
+
     private String renderDetail(Long catId, CalendarEventType eventType, VaccineType vaccineType,
                                  Authentication authentication, Model model) {
         User owner = currentUserProvider.get(authentication);

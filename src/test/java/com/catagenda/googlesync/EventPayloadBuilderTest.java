@@ -40,6 +40,26 @@ class EventPayloadBuilderTest {
     }
 
     @Test
+    void spayNeuterPendingTitleNamesTheCatWithoutClaimingARealDate() {
+        CalendarEvent event = new CalendarEvent(mochi, CalendarEventType.SPAY_NEUTER_PENDING, null,
+                LocalDate.of(2026, 4, 1), true);
+
+        String title = EventPayloadBuilder.buildTitle(event);
+
+        assertThat(title).contains("Mochi");
+    }
+
+    @Test
+    void spayNeuterScheduledTitleNamesTheCat() {
+        CalendarEvent event = new CalendarEvent(mochi, CalendarEventType.SPAY_NEUTER_SCHEDULED, null,
+                LocalDate.of(2026, 4, 1), false);
+
+        String title = EventPayloadBuilder.buildTitle(event);
+
+        assertThat(title).contains("Mochi").contains("Spay/neuter appointment");
+    }
+
+    @Test
     void vaccineTitleNamesTheSpecificVaccineType() {
         CalendarEvent event = new CalendarEvent(mochi, CalendarEventType.VACCINE, VaccineType.RABIES,
                 LocalDate.of(2026, 4, 1), false);

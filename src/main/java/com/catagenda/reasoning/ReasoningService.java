@@ -23,15 +23,18 @@ public class ReasoningService {
     private final CheckupReasoningService checkupReasoningService;
     private final VaccinationReasoningService vaccinationReasoningService;
     private final SupplyReasoningService supplyReasoningService;
+    private final SpayNeuterReasoningService spayNeuterReasoningService;
 
     public ReasoningService(CatService catService,
                              CheckupReasoningService checkupReasoningService,
                              VaccinationReasoningService vaccinationReasoningService,
-                             SupplyReasoningService supplyReasoningService) {
+                             SupplyReasoningService supplyReasoningService,
+                             SpayNeuterReasoningService spayNeuterReasoningService) {
         this.catService = catService;
         this.checkupReasoningService = checkupReasoningService;
         this.vaccinationReasoningService = vaccinationReasoningService;
         this.supplyReasoningService = supplyReasoningService;
+        this.spayNeuterReasoningService = spayNeuterReasoningService;
     }
 
     @Transactional(readOnly = true)
@@ -40,16 +43,21 @@ public class ReasoningService {
 
         List<DueCheckup> dueCheckups = new ArrayList<>();
         List<DueVaccine> dueVaccines = new ArrayList<>();
+        List<DueSpayNeuter> dueSpayNeuters = new ArrayList<>();
         for (Cat cat : cats) {
             dueCheckups.add(checkupReasoningService.computeNextCheckup(cat));
             dueVaccines.addAll(vaccinationReasoningService.computeNextDueDates(cat));
+            // Empty unless intent has been flagged (P6-1) — opt-in, unlike
+            // checkups/vaccines which every cat is always "due" for.
+            spayNeuterReasoningService.computeNextSpayNeuter(cat).ifPresent(dueSpayNeuters::add);
         }
 
-        // Handles the zero-cats case naturally: dueCheckups/dueVaccines stay
-        // empty, and computeHouseholdNeeds short-circuits to an empty list
-        // too — an empty summary, not an error (feeds P3-5's "all clear").
+        // Handles the zero-cats case naturally: dueCheckups/dueVaccines/
+        // dueSpayNeuters stay empty, and computeHouseholdNeeds
+        // short-circuits to an empty list too — an empty summary, not an
+        // error (feeds P3-5's "all clear").
         List<DueSupplyItem> dueSupplyItems = supplyReasoningService.computeHouseholdNeeds(owner);
 
-        return new DueSoonSummary(dueCheckups, dueVaccines, dueSupplyItems);
+        return new DueSoonSummary(dueCheckups, dueVaccines, dueSupplyItems, dueSpayNeuters);
     }
 }
